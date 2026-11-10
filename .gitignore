@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.tsbuildinfo
+uploads/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+public/*.js
+public/*.js.map
+public/*.css
+public/*.css.map
+!public/index.html

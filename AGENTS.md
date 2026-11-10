@@ -1,0 +1,4 @@
+- be brief
+- comments (make global)
+- stack / code style?
+- start planning app functionality / design

@@ -1,0 +1,10 @@
+node_modules
+dist
+.tsbuildinfo
+uploads
+public/*.js
+public/*.js.map
+public/*.css
+public/*.css.map
+*.db
+.git
