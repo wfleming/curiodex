@@ -50,6 +50,10 @@ export async function destroySession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.id, hashToken(token)))
 }
 
+export async function destroyUserSessions(userId: number): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.userId, userId))
+}
+
 async function sessionUser(token: string): Promise<SafeUser | null> {
   const id = hashToken(token)
   const rows = await db

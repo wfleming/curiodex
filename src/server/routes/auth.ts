@@ -10,14 +10,22 @@ import {
   verifyPassword,
   createSession,
   destroySession,
+  destroyUserSessions,
   setSessionCookie,
   clearSessionCookie,
+  requireAuth,
+  currentUser,
   type AuthVariables,
 } from '../auth.ts'
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+})
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(8),
 })
 
 async function getRegistrationEnabled(): Promise<boolean> {
@@ -76,5 +84,19 @@ export const authRoutes = new Hono<{ Variables: AuthVariables }>()
     const token = getCookie(c, 'session')
     if (token) await destroySession(token)
     clearSessionCookie(c)
+    return c.body(null, 204)
+  })
+  .post('/password', requireAuth, zValidator('json', changePasswordSchema), async (c) => {
+    const { currentPassword, newPassword } = c.req.valid('json')
+    const { id } = currentUser(c)
+
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1)
+    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+      return c.json({ error: 'current password is incorrect' }, 403)
+    }
+
+    await db.update(users).set({ passwordHash: await hashPassword(newPassword) }).where(eq(users.id, id))
+    await destroyUserSessions(id)
+    setSessionCookie(c, await createSession(id))
     return c.body(null, 204)
   })
