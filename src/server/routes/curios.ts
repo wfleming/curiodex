@@ -53,7 +53,7 @@ function monthlyCostCents(curio: typeof curios.$inferSelect, eventsCostCents: nu
   const endDate = curio.relinquished ? curio.dateRelinquished! : new Date()
   const diffDays = (endDate.getTime() - curio.dateAcquired.getTime()) / 86_400_000
   const months = diffDays / 30.4375
-  if (months <= 0) return null
+  if (months < 1) return null
   return Math.round((curio.costCents + eventsCostCents) / months)
 }
 
