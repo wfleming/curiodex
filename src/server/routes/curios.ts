@@ -72,8 +72,17 @@ export const curioRoutes = new Hono<{ Variables: AuthVariables }>()
   .use(requireAuth)
   .get('/', async (c) => {
     const user = currentUser(c)
-    const rows = await db.select().from(curios).where(eq(curios.userId, user.id))
-    return c.json(rows)
+    const [rows, tagRows] = await Promise.all([
+      db.select().from(curios).where(eq(curios.userId, user.id)),
+      db
+        .select({ curioId: curioTags.curioId, name: tags.name })
+        .from(curioTags)
+        .innerJoin(tags, eq(curioTags.tagId, tags.id))
+        .innerJoin(curios, eq(curioTags.curioId, curios.id))
+        .where(eq(curios.userId, user.id)),
+    ])
+    const tagNames = (curioId: number) => tagRows.filter((r) => r.curioId === curioId).map((r) => r.name)
+    return c.json(rows.map((curio) => ({ ...curio, tags: tagNames(curio.id) })))
   })
   .post('/', zValidator('json', curioInput), async (c) => {
     const user = currentUser(c)
