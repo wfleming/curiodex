@@ -151,7 +151,7 @@ export function CuriosListPage(_props: { path?: string } = {}) {
       {visible.length === 0 ? (
         <p>{curios.length === 0 ? 'No curios yet.' : 'No curios match.'}</p>
       ) : view.mode === 'gallery' ? (
-        <ul class="curio-gallery">
+        <ul class="thumb-grid">
           {visible.map((curio) => (
             <li key={curio.id}>
               <Link href={`/curios/${curio.id}`} title={curio.name}>

@@ -227,7 +227,7 @@ ul {
   }
 }
 
-.curio-gallery {
+.thumb-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
   gap: 0.5rem;
@@ -254,6 +254,22 @@ ul {
     height: calc(100% + 1rem);
     margin: -0.5rem;
     object-fit: cover;
+  }
+
+  li {
+    position: relative;
+
+    &.removing a {
+      opacity: 0.35;
+    }
+
+    .remove {
+      position: absolute;
+      right: 0.25rem;
+      bottom: 0.25rem;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+    }
   }
 }
 
@@ -344,7 +360,7 @@ dl {
   }
 }
 
-.attachments ul li,
+.attachments ul:not(.thumb-grid) li,
 .events li ul li {
   display: flex;
   justify-content: space-between;

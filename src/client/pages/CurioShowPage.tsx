@@ -5,8 +5,9 @@ import { centsToInput, dollarsToCents, formatMoney, formatDate, toDateInput } fr
 import { errorMessage } from '../http.ts'
 import { checkRelinquished } from '../forms.ts'
 import { TagInput } from '../components/TagInput.tsx'
+import { AttachmentGrid, type GridAttachment } from '../components/AttachmentGrid.tsx'
 
-type Attachment = { id: number; filename: string }
+type Attachment = GridAttachment
 type EventRow = { id: number; date: string; description: string | null; costCents: number; attachments: Attachment[] }
 type Tag = { id: number; name: string }
 type Curio = {
@@ -26,6 +27,7 @@ type Curio = {
 export function CurioShowPage({ id }: { id?: string; path?: string }) {
   const [curio, setCurio] = useState<Curio | null>(null)
   const [editing, setEditing] = useState(false)
+  const [removing, setRemoving] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
@@ -63,9 +65,18 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
       setError(await errorMessage(res))
       return
     }
-    setEditing(false)
+    await Promise.all(removing.map((attachmentId) => api.api.attachments[':id'].$delete({ param: { id: String(attachmentId) } })))
+    stopEditing()
     await load()
   }
+
+  function stopEditing() {
+    setEditing(false)
+    setRemoving([])
+  }
+
+  const toggleRemoving = (attachmentId: number) =>
+    setRemoving((ids) => (ids.includes(attachmentId) ? ids.filter((id) => id !== attachmentId) : [...ids, attachmentId]))
 
   async function deleteCurio() {
     if (!confirm(`Delete "${curio!.name}"? This cannot be undone.`)) return
@@ -112,21 +123,14 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
     await load()
   }
 
-  async function uploadCurioAttachment(e: Event) {
-    const input = e.target as HTMLInputElement
-    const file = input.files?.[0]
-    if (!file) return
-    const form = new FormData()
-    form.set('file', file)
-    await fetch(`/api/curios/${curio!.id}/attachments`, { method: 'POST', body: form })
-    input.value = ''
-    await load()
-  }
-
-  async function uploadEventAttachment(eventId: number, file: File) {
-    const form = new FormData()
-    form.set('file', file)
-    await fetch(`/api/curios/${curio!.id}/events/${eventId}/attachments`, { method: 'POST', body: form })
+  async function uploadFiles(url: string, files: FileList | null) {
+    await Promise.all(
+      [...(files ?? [])].map((file) => {
+        const form = new FormData()
+        form.set('file', file)
+        return fetch(url, { method: 'POST', body: form })
+      }),
+    )
     await load()
   }
 
@@ -167,10 +171,16 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
             Date relinquished
             <input name="dateRelinquished" type="date" onInput={checkRelinquished} defaultValue={toDateInput(curio.dateRelinquished)} />
           </label>
+          {curio.attachments.length > 0 && (
+            <div class="field">
+              Attachments
+              <AttachmentGrid attachments={curio.attachments} removing={removing} onToggleRemove={toggleRemoving} />
+            </div>
+          )}
           {error && <p class="error">{error}</p>}
           <div class="actions">
             <button type="submit">Save</button>
-            <button type="button" onClick={() => setEditing(false)}>
+            <button type="button" onClick={stopEditing}>
               Cancel
             </button>
           </div>
@@ -210,19 +220,15 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
           <TagInput value={curio.tags.map((t) => t.name)} onChange={changeTags} />
           <div class="attachments">
             <h2>Attachments</h2>
-            <ul>
-              {curio.attachments.map((a) => (
-                <li key={a.id}>
-                  <a href={`/api/attachments/${a.id}`} target="_blank" rel="noreferrer">
-                    {a.filename}
-                  </a>
-                  <button type="button" onClick={() => deleteAttachment(a.id)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <input type="file" onChange={uploadCurioAttachment} />
+            <AttachmentGrid attachments={curio.attachments} />
+            <input
+              type="file"
+              multiple
+              onChange={(e) => {
+                const input = e.target as HTMLInputElement
+                uploadFiles(`/api/curios/${curio.id}/attachments`, input.files).then(() => (input.value = ''))
+              }}
+            />
           </div>
         </div>
       )}
@@ -254,9 +260,10 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
               </ul>
               <input
                 type="file"
+                multiple
                 onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0]
-                  if (file) uploadEventAttachment(event.id, file)
+                  const input = e.target as HTMLInputElement
+                  uploadFiles(`/api/curios/${curio.id}/events/${event.id}/attachments`, input.files).then(() => (input.value = ''))
                 }}
               />
             </li>
