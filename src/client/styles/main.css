@@ -81,7 +81,8 @@ form {
     margin: 0;
   }
 
-  label {
+  label,
+  .field {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -194,31 +195,67 @@ dl {
   }
 }
 
-.tags {
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+
+  button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--fg-dim);
+    line-height: 1;
+  }
+}
+
+.tag-input {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: text;
 
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-
-    button {
-      padding: 0;
-      border: none;
-      background: none;
-      color: var(--fg-dim);
-    }
+  &:focus-within {
+    border-color: var(--accent);
   }
 
-  form.inline {
-    gap: 0.25rem;
+  input {
+    flex: 1;
+    min-width: 6rem;
+    padding: 0.15rem 0;
+    border: none;
+    outline: none;
+  }
+
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin-top: 2px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+
+    li {
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+
+      &.active,
+      &:hover {
+        background: var(--border);
+      }
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import { api } from '../api.ts'
 import { centsToInput, dollarsToCents, formatMoney, formatDate, toDateInput } from '../format.ts'
 import { errorMessage } from '../http.ts'
 import { checkRelinquished } from '../forms.ts'
+import { TagInput } from '../components/TagInput.tsx'
 
 type Attachment = { id: number; filename: string }
 type EventRow = { id: number; date: string; description: string | null; costCents: number; attachments: Attachment[] }
@@ -72,19 +73,16 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
     route('/')
   }
 
-  async function addTag(e: Event) {
-    e.preventDefault()
-    const form = e.target as HTMLFormElement
-    const data = new FormData(form)
-    const name = String(data.get('tag') || '').trim()
-    if (!name) return
-    await api.api.curios[':id'].tags.$post({ param: { id: String(curio!.id) }, json: { name } })
-    form.reset()
-    await load()
-  }
-
-  async function removeTag(tagId: number) {
-    await api.api.curios[':id'].tags[':tagId'].$delete({ param: { id: String(curio!.id), tagId: String(tagId) } })
+  async function changeTags(names: string[]) {
+    const current = curio!.tags
+    setCurio({ ...curio!, tags: names.map((name) => current.find((t) => t.name === name) ?? { id: -1, name }) })
+    const added = names.filter((name) => !current.some((t) => t.name === name))
+    const removed = current.filter((t) => !names.includes(t.name))
+    const param = { id: String(curio!.id) }
+    await Promise.all([
+      ...added.map((name) => api.api.curios[':id'].tags.$post({ param, json: { name } })),
+      ...removed.map((t) => api.api.curios[':id'].tags[':tagId'].$delete({ param: { ...param, tagId: String(t.id) } })),
+    ])
     await load()
   }
 
@@ -209,20 +207,7 @@ export function CurioShowPage({ id }: { id?: string; path?: string }) {
               </>
             )}
           </dl>
-          <div class="tags">
-            {curio.tags.map((tag) => (
-              <span class="tag" key={tag.id}>
-                {tag.name}
-                <button type="button" onClick={() => removeTag(tag.id)}>
-                  ×
-                </button>
-              </span>
-            ))}
-            <form class="inline" onSubmit={addTag}>
-              <input name="tag" placeholder="add tag" />
-              <button type="submit">Add</button>
-            </form>
-          </div>
+          <TagInput value={curio.tags.map((t) => t.name)} onChange={changeTags} />
           <div class="attachments">
             <h2>Attachments</h2>
             <ul>

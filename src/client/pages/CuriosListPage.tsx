@@ -4,6 +4,7 @@ import { api } from '../api.ts'
 import { dollarsToCents, formatMoney, formatDate } from '../format.ts'
 import { errorMessage } from '../http.ts'
 import { checkRelinquished } from '../forms.ts'
+import { TagInput } from '../components/TagInput.tsx'
 
 type Curio = {
   id: number
@@ -18,6 +19,7 @@ export function CuriosListPage(_props: { path?: string } = {}) {
   const [curios, setCurios] = useState<Curio[] | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [tagNames, setTagNames] = useState<string[]>([])
 
   async function load() {
     const res = await api.api.curios.$get()
@@ -34,10 +36,6 @@ export function CuriosListPage(_props: { path?: string } = {}) {
     const data = new FormData(form)
     const dateRelinquished = String(data.get('dateRelinquished') || '') || null
     const relinquished = data.get('relinquished') === 'on' || !!dateRelinquished
-    const tagNames = String(data.get('tags') || '')
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
 
     const res = await api.api.curios.$post({
       json: {
@@ -97,10 +95,10 @@ export function CuriosListPage(_props: { path?: string } = {}) {
             Date relinquished
             <input name="dateRelinquished" type="date" onInput={checkRelinquished} />
           </label>
-          <label>
-            Tags (comma separated)
-            <input name="tags" />
-          </label>
+          <div class="field">
+            Tags
+            <TagInput value={tagNames} onChange={setTagNames} />
+          </div>
           {error && <p class="error">{error}</p>}
           <button type="submit">Create</button>
         </form>
