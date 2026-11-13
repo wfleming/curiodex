@@ -14,6 +14,7 @@ export function CuriosListPage(_props: { path?: string } = {}) {
   const [error, setError] = useState<string | null>(null)
   const [tagNames, setTagNames] = useState<string[]>([])
   const [view, setView] = usePersistentState<ListView>('curio-list-view', defaultView)
+  const [query, setQuery] = useState('')
   const update = (patch: Partial<ListView>) => setView({ ...view, ...patch })
 
   async function load() {
@@ -55,7 +56,7 @@ export function CuriosListPage(_props: { path?: string } = {}) {
 
   if (!curios) return <p>Loading…</p>
 
-  const visible = applyView(curios, view)
+  const visible = applyView(curios, view, query)
 
   return (
     <main>
@@ -100,6 +101,16 @@ export function CuriosListPage(_props: { path?: string } = {}) {
           <button type="submit">Create</button>
         </form>
       )}
+
+      <input
+        class="search"
+        type="search"
+        placeholder="Search name, description, tags"
+        autocapitalize="none"
+        autocomplete="off"
+        value={query}
+        onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+      />
 
       <div class="list-controls">
         <label>

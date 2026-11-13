@@ -172,6 +172,18 @@ ul {
   }
 }
 
+.search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg);
+  font: inherit;
+}
+
 .list-controls {
   display: flex;
   flex-wrap: wrap;
