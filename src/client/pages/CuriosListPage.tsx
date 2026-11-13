@@ -135,6 +135,13 @@ export function CuriosListPage(_props: { path?: string } = {}) {
             <option value="either">Either</option>
           </select>
         </label>
+        <div class="mode-toggle">
+          {(['list', 'gallery'] as const).map((mode) => (
+            <button type="button" key={mode} class={view.mode === mode ? 'active' : ''} onClick={() => update({ mode })}>
+              {mode === 'list' ? 'List' : 'Gallery'}
+            </button>
+          ))}
+        </div>
         <div class="field tag-filter">
           Tags
           <TagInput value={view.tags} onChange={(tags) => update({ tags })} placeholder="filter by tag" />
@@ -143,6 +150,20 @@ export function CuriosListPage(_props: { path?: string } = {}) {
 
       {visible.length === 0 ? (
         <p>{curios.length === 0 ? 'No curios yet.' : 'No curios match.'}</p>
+      ) : view.mode === 'gallery' ? (
+        <ul class="curio-gallery">
+          {visible.map((curio) => (
+            <li key={curio.id}>
+              <Link href={`/curios/${curio.id}`} title={curio.name}>
+                {curio.coverAttachmentId ? (
+                  <img src={`/api/attachments/${curio.coverAttachmentId}`} alt={curio.name} loading="lazy" />
+                ) : (
+                  <span>{curio.name}</span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
       ) : (
         <ul class="curio-list">
           {visible.map((curio) => (

@@ -8,6 +8,7 @@ export type ListCurio = {
   dateRelinquished: string | null
   createdAt: string
   tags: string[]
+  coverAttachmentId: number | null
 }
 
 export type ListView = {
@@ -15,9 +16,10 @@ export type ListView = {
   sortDir: 'asc' | 'desc'
   owned: 'yes' | 'no' | 'either'
   tags: string[]
+  mode: 'list' | 'gallery'
 }
 
-export const defaultView: ListView = { sortKey: 'added', sortDir: 'desc', owned: 'yes', tags: [] }
+export const defaultView: ListView = { sortKey: 'added', sortDir: 'desc', owned: 'yes', tags: [], mode: 'list' }
 
 const isSubsequence = (term: string, word: string) => {
   let matched = 0

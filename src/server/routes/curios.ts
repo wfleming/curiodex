@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, like } from 'drizzle-orm'
 import { db } from '../db.ts'
 import { curios, tags, curioTags, events, attachments } from '../schema.ts'
 import { requireAuth, currentUser, type AuthVariables } from '../auth.ts'
@@ -72,7 +72,7 @@ export const curioRoutes = new Hono<{ Variables: AuthVariables }>()
   .use(requireAuth)
   .get('/', async (c) => {
     const user = currentUser(c)
-    const [rows, tagRows] = await Promise.all([
+    const [rows, tagRows, imageRows] = await Promise.all([
       db.select().from(curios).where(eq(curios.userId, user.id)),
       db
         .select({ curioId: curioTags.curioId, name: tags.name })
@@ -80,9 +80,16 @@ export const curioRoutes = new Hono<{ Variables: AuthVariables }>()
         .innerJoin(tags, eq(curioTags.tagId, tags.id))
         .innerJoin(curios, eq(curioTags.curioId, curios.id))
         .where(eq(curios.userId, user.id)),
+      db
+        .select({ curioId: attachments.entityId, id: attachments.id })
+        .from(attachments)
+        .innerJoin(curios, and(eq(attachments.entityType, 'curio'), eq(attachments.entityId, curios.id)))
+        .where(and(eq(curios.userId, user.id), like(attachments.mimeType, 'image/%')))
+        .orderBy(attachments.id),
     ])
+    const coverAttachmentId = (curioId: number) => imageRows.find((r) => r.curioId === curioId)?.id ?? null
     const tagNames = (curioId: number) => tagRows.filter((r) => r.curioId === curioId).map((r) => r.name)
-    return c.json(rows.map((curio) => ({ ...curio, tags: tagNames(curio.id) })))
+    return c.json(rows.map((curio) => ({ ...curio, tags: tagNames(curio.id), coverAttachmentId: coverAttachmentId(curio.id) })))
   })
   .post('/', zValidator('json', curioInput), async (c) => {
     const user = currentUser(c)
